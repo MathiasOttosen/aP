@@ -151,6 +151,7 @@
     <ClInclude Include="Holder.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="JsonReader.h" />
+    <ClInclude Include="JsonValue.h" />
     <ClInclude Include="TypeDeductionHelper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

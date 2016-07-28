@@ -33,5 +33,8 @@
     <ClInclude Include="Holder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="JsonValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
