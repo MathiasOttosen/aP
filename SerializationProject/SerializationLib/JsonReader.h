@@ -1,119 +1,114 @@
 #pragma once
-#include "JsonObject.h"
+
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include "JsonObject.h"
+#include "JsonParser.h"
 
 namespace jserialization {
-	class JsonReader {
+	namespace stdvisitor {
+		class JsonReader {
+			using ctype = jserialization::ConceptType;
+			using btype = jserialization::BaseType;
+			using Parser = jserialization::Parser;
 
-	private:
-		std::ifstream inf;
+			const Parser* parser;
 
-	public:
-		void startFileStream(std::string filename) {
-			try {
-				inf.open(filename);
-			}
-			catch (std::ifstream::failure e) {
-				std::cout << "Exception opening/reading file";
-			}
+		public:
 
-			// While there's still stuff left to read
-			/*while (inf)
-			{
-				// read stuff from the file into a string and print it
-				std::string strInput;
-				inf >> strInput;
-				std::cout << strInput << std::endl;
-			}*/
-		}
+			JsonReader(std::string filename);
 
-		void closeFileStream() {
-			try {
-				inf.close();
-			}
-			catch (std::ifstream::failure e) {
-				std::cout << "Failed to close file";
-			}
-		}
+			~JsonReader();
 
-		
 
-		template <typename TYPE, typename = std::enable_if_t<is_container<TYPE>>>
-		void visit(JsonObject<TYPE>* jo) {
-			std::string tmp;
-			std::string key = "";
-			Vector<void*> elementList = new Vector<void*>();
+			template <typename TYPE, typename = std::enable_if_t<is_container<TYPE>>>
+			void visit(JsonObject<TYPE>* jo) {
+				while (!parser->EndOfObject()) {
 
-			inf >> tmp;
-			//we need to identify what json object type we are looking at
-			if (tmp.Equals("{")) { //it is assumed that the first symbol is always removed thus "{" would mean we are looking at an array
-				while (expect(tmp,"{")) {
-					std::string subkey;
-					inf >> subkey;
-					inf >> tmp;
-					if (expect(tmp, ":")) {
-						inf >> tmp;
-						if (expect(tmp, "{") || expect(tmp, "[")) {
+					auto tuple = parser->ParseNextObject(); //tuple<string name, string value, Concept_Type, Base_Type>
 
-							//make container json object with key as name
-							//it is expected that we end with "}" is read and thus not available when we return
-						}
-						else
-						{
-							//type id tmp
-							//make json object with that type
-						}
-					}
-					inf >> tmp; //2 possiblilties, "," is stored and we continues the loop, "]" is stored and we end the loop
-					if (expect(tmp, ",")) {
-						inf >> tmp; //skip to '{' in order to continue loop
+					switch (std::get<2>(tuple)) {
+					case ctype::STRING:
+						auto js = new JsonObject<std::string>(tuple, std::get<1>(tuple));
+						jo.insert(js);
+						break;
+					case ctype::NUMBER:
+						createAndInsertJsonObject(jo, tuple);
+						break;
+					case ctype::ARRAY:
+					case ctype::INITIALIZERLIST:
+					case ctype::CONTAINER:
+						auto js = new JsonObject<std::vector<BaseValue*>>(tuple, std::get<1>(tuple));
+						js.accept(*this);
+						jo.insert(js);
+						break;
 					}
 				}
-			} 
-			else { //if we dont encounter "{" then we can assume we are looking at a name
-				key = tmp;
-				inf >> tmp; // expect ":"
-				if (expect(tmp, ":")) {
-					do
-					{
-						inf >> tmp;
-						if (tmp.Equals("{") || tmp.Equals("[")) {
-							//make container json object with key as name
-						}
-						else
-						{
-							//type id tmp
-							//make json object with that type
-						}
-					} while (expect(tmp, ","));
-				}
-				else
-				{
-					//bad json object
+			}
+
+			template <typename TYPE>
+			void visit(JsonObject<TYPE>* jo) {
+
+			}
+
+			template <typename TYPE>
+			void createAndInsertJsonObject(JsonObject<TYPE> jo, std::tuple<std::string, std::string, ctype, btype> tuple) {
+				switch (base_type) {
+				case btype::BOOL:
+					auto js = new JsonObject<bool>(tuple, StrToNumber<bool>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::CHAR:
+					auto js = new JsonObject<int8_t>(tuple, StrToNumber<int8_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::UCHAR:
+					auto js = new JsonObject<uint8_t>(tuple, StrToNumber<uint8_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::INT:
+					auto js = new JsonObject<int16_t>(tuple, StrToNumber<int16_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::UINT:
+					auto js = new JsonObject<uint16_t>(tuple, StrToNumber<uint16_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::LONG:
+					auto js = new JsonObject<int32_t>(tuple, StrToNumber<int32_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::ULONG:
+					auto js = new JsonObject<uint32_t>(tuple, StrToNumber<uint32_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::LONGLONG:
+					auto js = new JsonObject<int64_t>(tuple, StrToNumber<int64_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::ULONGLONG:
+					auto js = new JsonObject<uint64_t>(tuple, StrToNumber<uint64_t>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::FLOAT:
+					auto js = new JsonObject<float>(tuple, StrToNumber<float>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::DOUBLE:
+					auto js = new JsonObject<double>(tuple, StrToNumber<double>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
+				case btype::LONGDOUBLE:
+					auto js = new JsonObject<long double>(tuple, StrToNumber<long double>(std::get<1>(tuple)));
+					jo.insert(js);
+					break;
 				}
 			}
 
-			
-		}
 
-		template <typename TYPE, typename = std::enable_if_t<!is_container<TYPE>>>
-		void visit(JsonObject<TYPE>* jo) {
-
-		}
-
-		template <typename TYPE, typename = std::enable_if_t<is_array<TYPE>>>
-		std::vector<Holder*> extractContainerInfo() {
-
-		}
-
-		bool expect(std::string expectee, std::string comparee) {
-			return expectee.compare(comparee);
-		}
-
-		
-	};
+		};
+	}
 }

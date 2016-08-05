@@ -1,33 +1,44 @@
 #pragma once
 #include <string>
 #include <tuple>
+#include "EBaseType.h"
+#include "TypeDeductionHelper.h"
+#include "EConceptType.h"
+#include "BaseValue.h"
+
 namespace jserialization {
 	template <typename TYPE>
-	class JsonObject {
-		
+	class JsonObject : BaseValue {
+
+		const TYPE jvalue_;
+
 	public:
 
-		typedef TYPE valueType;
+	    using is_array = std::is_array<TYPE>;
+		using is_container = is_container<TYPE>;
+		
 
-		const std::string name;
+		JsonObject(std::string name, std::string valueString, ConceptType conceptType, BaseType baseType, TYPE v) noexcept
+			: BaseValue(std::make_tuple(name, valueString, conceptType, baseType)), jvalue_(v) {}
 
-		const std::string rawValue;
+		JsonObject(std::string valueString, ConceptType conceptType, BaseType baseType, TYPE v) noexcept 
+			: BaseValue(std::make_tuple("", valueString, conceptType, baseType)), jvalue_(v) {}
 
-		const valueType value;
-
-		JsonObject(std::string valueString, valueType v) : name(""), rawValue(valueString), value(v) {
-		}
-
-		JsonObject(std::tuple<std::string, std::string, valueType> metaInfo)
-			: name(std::get<0>(metaInfo)),
-				rawValue(std::get<1>(metaInfo)),
-				value(std::get<2>(metaInfo)) {
-
-		}
-
+		JsonObject(std::tuple<std::string, std::string, ConceptType, BaseType> metaInfo, TYPE value) noexcept
+			: BaseValue(metainfo), jvalue_(value) {}
+		
 		template <typename Visitor>
 		void accept(Visitor& v) {
 			v.visit(*this);
+		}
+		
+		TYPE GetValue() {
+			return jvalue_;
+		}
+
+		template <typename = std::enable_if_t<is_container::value>>
+		void insert(BaseValue* item) {
+			jvalue_.push_back(item);
 		}
 	};
 }
