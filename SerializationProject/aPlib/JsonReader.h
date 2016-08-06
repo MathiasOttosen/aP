@@ -33,12 +33,15 @@ namespace jserialization {
 
 					auto tuple = parser->ParseNextObject(); //tuple<string name, string value, Concept_Type, Base_Type>
 
+					if (std::get<0>(tuple).compare("weather") == 0) {
+						std::cout << "Weather" << std::endl;
+					}
 					switch (std::get<2>(tuple)) {
 					case ctype::STRING:
 						CreateJsonObject(jo, tuple, std::get<1>(tuple));
 						break;
 					case ctype::NUMBER:
-						createAndInsertJsonObject(jo, tuple);
+						CreateAndInsertJsonObject(jo, tuple);
 						break;
 					case ctype::ARRAY:
 					case ctype::INITIALIZERLIST:
@@ -58,27 +61,29 @@ namespace jserialization {
 			std::enable_if_t<jserialization::is_container<SUBTYPE>::value, void> 
 				CreateJsonObject(JsonObject<TYPE>& jo, 
 					const std::tuple<std::string, std::string, 
-					ConceptType, BaseType> tuple,
-					const SUBTYPE value) {
+					ConceptType, BaseType>& tuple,
+					const SUBTYPE& value) {
 				auto js = new JsonObject<SUBTYPE>(tuple, value);
 				js->accept(*this);
 				jo.insert(js);
+				delete js;
 			}
 
 			template <typename TYPE, typename SUBTYPE>
 			std::enable_if_t<!jserialization::is_container<SUBTYPE>::value, void> 
 				CreateJsonObject(JsonObject<TYPE>& jo, 
-					const std::tuple<std::string, std::string, ConceptType, BaseType> tuple,
-					const SUBTYPE value) {
+					const std::tuple<std::string, std::string, ConceptType, BaseType>& tuple,
+					const SUBTYPE& value) {
 				auto js = new JsonObject<SUBTYPE>(tuple, value);
 				jo.insert(js);
+				delete js;
 			}
 
 			template <typename TYPE>
-			void createAndInsertJsonObject(JsonObject<TYPE>& jo, std::tuple<std::string, std::string, ctype, btype> tuple) {
+			void CreateAndInsertJsonObject(JsonObject<TYPE>& jo, std::tuple<std::string, std::string, ctype, btype>& tuple) {
 				switch (std::get<3>(tuple)) {
 				case btype::STRING:
-					jo.insert(new JsonObject<std::string>(tuple, std::get<1>(tuple)));
+					CreateJObject(jo, tuple, std::get<1>(tuple));
 					break;
 				case btype::BOOL:
 					ConvertAndCreate < TYPE, bool > (jo, tuple);
@@ -120,15 +125,21 @@ namespace jserialization {
 			}
 
 			template <typename TYPE, typename SUBTYPE>
-			void ConvertAndCreate(JsonObject<TYPE>& jo, const std::tuple<std::string, std::string, ctype, btype> tuple) {
+			void ConvertAndCreate(JsonObject<TYPE>& jo, const std::tuple<std::string, std::string, ctype, btype>& tuple) {
 				SUBTYPE val;
 				if (StrToNumber<SUBTYPE>(std::get<1>(tuple),val)) {
-					auto js = new JsonObject<SUBTYPE>(tuple, val);
-					jo.insert(js);
+					CreateJObject(jo, tuple, val);
 				}
 				else {
 					throw std::runtime_error("Could not convert");
 				}
+			}
+
+			template<typename TYPE, typename SUBTYPE>
+			void CreateJObject(JsonObject<TYPE>& jo, const std::tuple<std::string, std::string, ctype, btype>& tuple, const SUBTYPE& val) {
+				auto js = new JsonObject<SUBTYPE>(tuple, val);
+				jo.insert(js);
+				delete js;
 			}
 
 

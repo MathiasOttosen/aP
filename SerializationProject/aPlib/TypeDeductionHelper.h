@@ -55,45 +55,12 @@ namespace jserialization {
 			void dummy(); //for GCC to supress -Wctor-dtor-privacy
 		};
 	}
-	/*template<typename T>
-	struct has_const_iterator
-	{
-	private:
-		typedef char one;
 
-		template<typename C> static one test(typename C::const_iterator*);
-	public:
-		static const bool value = sizeof(test<T>(0)) == sizeof(one);
-		typedef T type;
-	};
-
-	// for iterator begin and end, all containers have a const begin and end
-	template <typename T>
-	struct has_begin_end
-	{
-		struct Dummy { typedef void const_iterator; };
-		typedef typename std::conditional<has_const_iterator<T>::value, T, Dummy>::type TType;
-		typedef typename TType::const_iterator iter;
-
-		struct Fallback { iter begin() const; iter end() const; };
-		struct Derived : TType, Fallback { };
-
-		template<typename C, C> struct ChT;
-
-		template<typename C> static char(&f(ChT<iter(Fallback::*)() const, &C::begin>*))[1];
-		template<typename C> static char(&f(...))[2];
-		template<typename C> static char(&g(ChT<iter(Fallback::*)() const, &C::end>*))[1];
-		template<typename C> static char(&g(...))[2];
-
-		static bool const beg_value = sizeof(f<Derived>(0)) == 2;
-		static bool const end_value = sizeof(g<Derived>(0)) == 2;
-	};
-	*/
 	template <typename T>
 	struct is_container : public std::integral_constant<bool,
 		detail::has_const_iterator<T>::value &&
 		detail::has_begin_end<T>::beg_value  &&
-		detail::has_begin_end<T>::end_value && !std::is_same_v<T, std::string>>  { };
+		detail::has_begin_end<T>::end_value && !std::is_same<T, std::string>::value>  { };
 
 	template <>
 	struct is_container<std::string> : std::false_type { };

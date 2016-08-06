@@ -143,10 +143,12 @@
     <ClInclude Include="JsonParser.h" />
     <ClInclude Include="JsonReader.h" />
     <ClInclude Include="JsonWriter.h" />
+    <ClInclude Include="SerializeFuncs.h" />
     <ClInclude Include="TypeDeductionHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseValue.cpp" />
+    <ClCompile Include="DataStore.cpp" />
     <ClCompile Include="EBaseType.cpp" />
     <ClCompile Include="EConceptType.cpp" />
     <ClCompile Include="JsonObject.cpp" />

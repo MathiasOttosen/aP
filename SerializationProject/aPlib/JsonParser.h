@@ -27,17 +27,19 @@ namespace jserialization{
 		
 		bool EndOfObject();
 
-		char NoWSPeek(std::ifstream& inf);
+		inline char NoWSPeek(std::ifstream& inf);
 
-		std::string ReadWord();
+		inline std::string ReadWord();
 
-		std::string ReadTilDelimiter(const char delimiter);
+		inline std::string ReadTilDelimiter(const char& delimiter);
 
-		std::string ReadDigits();
+		inline std::string ReadDigits();
 
-		std::string ReadFreeWord();
+		inline std::string ReadFreeWord();
+		
+		inline std::list<char> AttemptReadForward();
 
-		char ReadSingleLetter();
+		inline char ReadSingleLetter();
 
 	private:
 		std::ifstream inf;

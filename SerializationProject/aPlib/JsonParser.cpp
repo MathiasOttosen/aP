@@ -32,8 +32,18 @@ std::tuple<std::string, std::string, ctype, btype> Parser::ParseNextObject() {
 	std::string name = "";
 	std::string value = "";
 	if (NoWSPeek(inf) == '{'|| NoWSPeek(inf) == ',') { //process object or element in list
-		ReadSingleLetter();
-		ParseSimpleJsonObject(name, value, concept_type, base_type);
+		ReadSingleLetter(); 
+		auto clst = AttemptReadForward();
+		if (NoWSPeek(inf) == '[') { //array
+			concept_type = ctype::ARRAY;
+			base_type = btype::CUSTOM;
+		}
+		else {
+			for (auto it = clst.begin(); it != clst.end(); it++) {
+				inf.putback(*it);
+			}
+			ParseSimpleJsonObject(name, value, concept_type, base_type);
+		}
 	}
 	else if (NoWSPeek(inf) == '[') { //process array
 		ReadSingleLetter();
@@ -73,8 +83,21 @@ void Parser::ParseSimpleJsonObject(std::string& name, std::string& value, ctype&
 				base_type = btype::CUSTOM;
 			}
 			else if (NoWSPeek(inf) == '{') {  //object 
+
 				concept_type = ctype::CONTAINER;
 				base_type = btype::CUSTOM;
+				/*auto clst = AttemptReadForward();
+				if (NoWSPeek(inf) == '[') { //array
+					concept_type = ctype::ARRAY;
+					base_type = btype::CUSTOM;
+				}
+				else {
+					for (auto it = clst.begin(); it != clst.end(); it++) {
+						inf.putback(*it);
+					}
+					concept_type = ctype::CONTAINER;
+					base_type = btype::CUSTOM;
+				}*/
 			}
 			else if (NoWSPeek(inf) == 'f' || NoWSPeek(inf) == 't') {
 				value = ReadFreeWord();
@@ -91,7 +114,10 @@ bool Parser::EndOfObject() {
 		inf.ignore();
 		endofobject = true;
 		if (NoWSPeek(inf) == ']') {
-			inf.ignore();
+			inf.ignore();	
+			if (NoWSPeek(inf) == '}') {
+				inf.ignore();
+			}
 		}
 	}
 	if (NoWSPeek(inf) == '%')
@@ -99,7 +125,7 @@ bool Parser::EndOfObject() {
 	return endofobject;
 }
 
-char Parser::NoWSPeek(std::ifstream& inf) {
+inline char Parser::NoWSPeek(std::ifstream& inf) {
 	while (inf.peek() <= 10 || inf.peek() == 32) {
 		if (inf.peek() == EOF)
 			break;
@@ -111,7 +137,7 @@ char Parser::NoWSPeek(std::ifstream& inf) {
 	return inf.peek();
 }
 
-std::string Parser::ReadWord() {
+inline std::string Parser::ReadWord() {
 	std::ostringstream os;
 	if (NoWSPeek(inf) == '\"') {
 		os << ReadSingleLetter();
@@ -120,7 +146,7 @@ std::string Parser::ReadWord() {
 	return os.str();
 }
 
-std::string Parser::ReadTilDelimiter(const char delimiter) {
+inline std::string Parser::ReadTilDelimiter(const char& delimiter) {
 	std::ostringstream os;
 	auto c = ReadSingleLetter();
 	while (c != delimiter) {
@@ -131,7 +157,7 @@ std::string Parser::ReadTilDelimiter(const char delimiter) {
 	return os.str();
 }
 
-std::string Parser::ReadDigits() {
+inline std::string Parser::ReadDigits() {
 	std::ostringstream os;
 	auto c = ReadSingleLetter();
 	while ((NoWSPeek(inf) >= '0' && NoWSPeek(inf) <= '9') || NoWSPeek(inf) == '.' || NoWSPeek(inf) == '-') {
@@ -142,7 +168,7 @@ std::string Parser::ReadDigits() {
 	return os.str();
 }
 
-std::string Parser::ReadFreeWord() {
+inline std::string Parser::ReadFreeWord() {
 	std::ostringstream os;
 	auto c = ReadSingleLetter();
 	while (NoWSPeek(inf) >= 'a' && NoWSPeek(inf) <= 'z') {
@@ -153,7 +179,19 @@ std::string Parser::ReadFreeWord() {
 	return os.str();
 }
 
-char Parser::ReadSingleLetter() {
+inline std::list<char> Parser::AttemptReadForward() {
+	std::list<char> carr;
+	while (inf.peek() <= 10 || inf.peek() == 32) {
+		char c;
+		if (inf.peek() == EOF)
+			break;
+		inf.get(c);
+		carr.push_back(c);
+	}
+	return carr;
+}
+
+inline char Parser::ReadSingleLetter() {
 	char c;
 	NoWSPeek(inf);
 	inf.get(c);	

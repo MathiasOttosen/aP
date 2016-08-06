@@ -23,7 +23,9 @@ namespace jserialization {
 
 	public:
 
-		BaseValue(std::tuple<std::string, std::string, ConceptType, BaseType> concept);
+		BaseValue(const std::tuple<std::string, std::string, ConceptType, BaseType>& concept) noexcept;
+
+		BaseValue(const std::tuple<std::string, std::string, ConceptType, BaseType>& concept, std::list<int>& subobjects) noexcept;
 
 		virtual ~BaseValue();
 
@@ -135,23 +137,40 @@ namespace jserialization {
 			}
 		}
 
+		int GetBaseId() const noexcept;
+
 		std::string GetBaseName() const noexcept;
 
 		std::string GetBaseValue() const noexcept;
 
 		ConceptType GetConceptType() const noexcept;
 
+		std::string GetConceptTypeAsStr() const noexcept;
+
 		BaseType GetBaseType() noexcept;
+
+		BaseType GetCBaseType() const noexcept;
+
+		std::string GetBaseTypeAsStr() const noexcept;
 
 		int GetSize() const noexcept;
 
 		std::list<int> GetValueIdList() const noexcept;
 
+		void InsertValueId(int& id) noexcept;
+
 		std::string IdListStr() const noexcept;
 
 		std::string ToStr() noexcept;
 
-	
+		std::list<std::string> GetMemberList() const noexcept;
+
+		std::list<std::string> GetEmptyMemberList() const noexcept;
+
+		bool operator<(const BaseValue& other) noexcept;
+
+		bool compare(std::string& name, std::string& value, std::string& concept_type,
+			std::string& base_type, int& size, std::list<int>& subobjects) noexcept;
 	private:
 
 		void DetermineBaseType() noexcept;

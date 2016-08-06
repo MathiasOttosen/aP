@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <cstdarg>
 #include "TypeDeductionHelper.h"
 #include "jsonobject.h"
 #include "EBaseType.h"
@@ -10,41 +11,19 @@
 
 namespace jserialization {
 
+	bool ReadSingleInput(std::ifstream& fs, std::string& data);
+
+	bool Search(std::ifstream& fs, std::list<std::string>& data);
 
 	//atomic function
 	template < typename TYPE>
 	void input(TYPE& jo, int id) {
 		std::ofstream fs(jo.ToStr(), ios::app);
-		jo.Serialize(fs);
+		jo.Serialize(fs, id);
+		fs.close();
 	}
 
-	//async function
-	template<typename TYPE>
-	int findOrInsert(JsonObject<TYPE>& jo) {
-		std::ifstream fs(jo.ToStr());
 
-		jo.Deserialize(fs);
-
-		int id;
-		std::string name;
-		std::string value;
-		std::string concepttype;
-		std::string basetype;
-		int size;
-		std::list<int> subobjects;
-		int counter = 0;
-		while (fs >> id >> name >> value >> concepttype >> basetype >> size) {
-			for (int i = 0; i < size; i++) {
-				int val;
-				fs >> val;
-				subobjects.push_back(val);
-			}
-			if (jo.compare(name, value, concepttype, basetype, size, subobjects)) {
-				return id;
-			}
-			counter++;
-		}
-		input(jo, counter++);
-		return counter;
-	}
+	//async
+	int findOrInsert(const std::string objectSpecifier, const std::list<std::string> query, std::list<std::string> datalist);
 }

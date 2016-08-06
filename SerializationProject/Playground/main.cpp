@@ -26,8 +26,10 @@ int main()
 
 	auto jr = stdvisitor::JsonReader("hourly_16.json");
 
-	auto jo = JsonObject<std::vector<BaseValue*>>(
-		std::make_tuple(std::string(""), std::string(""), ConceptType::CONTAINER, BaseType::CUSTOM), std::vector<BaseValue*>());
+	std::tuple<std::string, std::string, ConceptType, BaseType> tuple = 
+		std::make_tuple(std::string(""),std::string(""), ConceptType(ConceptType::CONTAINER), BaseType(BaseType::CUSTOM));
+
+	auto jo = JsonObject<std::vector<BaseValue*>>( tuple, std::vector<BaseValue*>());
 
 	jo.accept(jr);
 
